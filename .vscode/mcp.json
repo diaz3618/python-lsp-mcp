@@ -17,6 +17,7 @@
 			],
 			"env": {}
 		},
+		// Python LSP-MCP: PyPI version (recommended)
 		"python-lsp-mcp": {
 			"type": "stdio",
 			"command": "uvx",
@@ -29,5 +30,20 @@
 			],
 			"env": {}
 		}
+		// Alternative: GitHub version (for latest development features)
+		// "python-lsp-mcp-github": {
+		// 	"type": "stdio",
+		// 	"command": "uvx",
+		// 	"args": [
+		// 		"--from",
+		// 		"git+https://github.com/diaz3618/python-lsp-mcp.git",
+		// 		"python-lsp-mcp",
+		// 		"--lsp-command",
+		// 		"pylsp",
+		// 		"--workspace",
+		// 		"/home/diaz/mygit/python-lsp-mcp"
+		// 	],
+		// 	"env": {}
+		// }
 	}
 }
