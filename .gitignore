@@ -220,7 +220,6 @@ memory-bank/
 docs/research
 docs/setup
 docs/publishing
-.vscode/mcp.json
 docs/reports
 repos
 agents

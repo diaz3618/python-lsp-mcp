@@ -1,31 +1,164 @@
-# Python LSP-MCP Development Plans
+# Python LSP-MCP Development Plans - Master Index
 
 **AI-Agent-Optimized Implementation Guide**
 
-**Purpose**: Detailed, step-by-step development plans for implementing features from FEATURE_ADDITIONS.md  
-**Date**: February 5, 2026  
-**Version**: 1.0.0  
+**Purpose**: Organized, feature-specific implementation plans for Python LSP-MCP enhancements  
+**Date**: February 6, 2026  
+**Version**: 3.0.0 - Complete Modular Structure  
 **Target Audience**: AI coding agents (GitHub Copilot, Claude, etc.)
 
 ---
 
-## Document Structure
+## 📋 Document Organization
 
-Each feature plan follows this structure:
+This development plan is split into **individual feature documents** for maximum AI agent efficiency. Each feature is self-contained with:
 
-1. **Goal** - What we're building and why
-2. **Prerequisites** - What must be in place first
-3. **LSP Specification** - Protocol details from LSP 3.17 spec
-4. **Implementation Steps** - Detailed, numbered steps with file paths
-5. **Testing Requirements** - Test cases and verification
-6. **Integration Points** - How this connects to existing code
-7. **Verification Checklist** - Final checks before completion
+- Complete implementation strategy
+- Reference implementation analysis
+- Step-by-step code examples
+- Testing requirements
+- Verification checklists
+
+**Benefits**:
+- ✅ Focused context per feature
+- ✅ Parallel implementation possible
+- ✅ Clear dependency tracking
+- ✅ Easier updates and maintenance
+- ✅ No massive monolithic files
 
 ---
 
-## Current Architecture Overview
+## 🎯 All Features Overview
 
-Before implementing new features, understand the existing architecture:
+### Refactoring Features (From Reference Implementation)
+
+| Feature ID | Name | Priority | Complexity | Time | Status | Document |
+|------------|------|----------|------------|------|--------|----------|
+| **FEATURE_01** | Rename Refactoring | HIGH | MEDIUM | 3-4h | ❌ | [📄 FEATURE_01](./FEATURE_01_RENAME_REFACTORING.md) |
+| **FEATURE_02** | Backend Switching | MEDIUM | MEDIUM-HIGH | 4-6h | ❌ | [📄 FEATURE_02](./FEATURE_02_BACKEND_SWITCHING.md) |
+| **FEATURE_03** | Move Refactoring | MEDIUM | HIGH | 5-7h | ❌ | [📄 FEATURE_03](./FEATURE_03_MOVE_REFACTORING.md) |
+| **FEATURE_04** | Change Signature | MEDIUM | HIGH | 4-6h | 📝 TBD | Not yet documented |
+| **FEATURE_05** | Pyright Diagnostics | MEDIUM | MEDIUM | 3-4h | 📝 TBD | Not yet documented |
+
+### LSP Method Features (From Original Plans)
+
+| Feature ID | Name | Priority | Complexity | Time | Status | Document |
+|------------|------|----------|------------|------|--------|----------|
+| **FEATURE_10** | Code Actions | HIGH | MEDIUM | 2-3h | ❌ | [📄 FEATURE_10](./FEATURE_10_CODE_ACTIONS.md) |
+| **FEATURE_11** | Document Formatting | HIGH | LOW-MEDIUM | 1-2h | ❌ | [📄 FEATURE_11](./FEATURE_11_DOCUMENT_FORMATTING.md) |
+| **FEATURE_12** | Range Formatting | MEDIUM | LOW | 1h | ❌ | [📄 FEATURE_12](./FEATURE_12_RANGE_FORMATTING.md) |
+| **FEATURE_13** | Workspace Symbols | MEDIUM | LOW-MEDIUM | 1-2h | ❌ | [📄 FEATURE_13](./FEATURE_13_WORKSPACE_SYMBOLS.md) |
+
+### Additional Features (Future)
+
+| Feature ID | Name | Priority | Complexity | Estimated Time | Status |
+|------------|------|----------|------------|----------------|--------|
+| **FEATURE_06** | Signature Help | MEDIUM | LOW | 2-3h | 📝 Not documented |
+| **FEATURE_07** | Update Document | LOW | MEDIUM | 2-3h | 📝 Not documented |
+| **FEATURE_08** | Regex Search | LOW | MEDIUM | 3-4h | 📝 Not documented |
+| **FEATURE_09** | Status Tool | LOW | LOW | 2-3h | 📝 Not documented |
+
+**Legend**:
+- ❌ NOT STARTED - Feature document complete, ready to implement
+- 🟡 IN PROGRESS - Implementation ongoing
+- ✅ COMPLETE - Implementation done and tested
+- 📝 TBD - Feature document not yet created
+
+---
+
+## 📚 Quick Links by Category
+
+### ✅ Documented & Ready to Implement
+
+**Refactoring (Rope-based)**:
+- [FEATURE_01: Rename Refactoring](./FEATURE_01_RENAME_REFACTORING.md) - Safe workspace-wide symbol renaming
+- [FEATURE_02: Backend Switching](./FEATURE_02_BACKEND_SWITCHING.md) - Runtime backend selection (Rope vs Pyright)
+- [FEATURE_03: Move Refactoring](./FEATURE_03_MOVE_REFACTORING.md) - Relocate functions/classes between modules
+
+**LSP Methods**:
+- [FEATURE_10: Code Actions](./FEATURE_10_CODE_ACTIONS.md) - Quick fixes, refactorings, import management
+- [FEATURE_11: Document Formatting](./FEATURE_11_DOCUMENT_FORMATTING.md) - Full document PEP 8 formatting
+- [FEATURE_12: Range Formatting](./FEATURE_12_RANGE_FORMATTING.md) - Partial document formatting
+- [FEATURE_13: Workspace Symbols](./FEATURE_13_WORKSPACE_SYMBOLS.md) - Search symbols across workspace
+
+### 📝 To Be Documented
+
+- FEATURE_04: Change Signature (modify function parameters)
+- FEATURE_05: Pyright Diagnostics (type checking)
+- FEATURE_06: Signature Help (function signature tooltips)
+- FEATURE_07: Update Document (incremental updates)
+- FEATURE_08: Regex Search (ripgrep integration)
+- FEATURE_09: Status Tool (server status display)
+
+---
+
+## � Recommended Implementation Order
+
+### Phase 1: Foundation (Week 1) - Refactoring Infrastructure
+
+**Start Here** to enable Rope-based refactoring:
+
+1. **[FEATURE_01: Rename Refactoring](./FEATURE_01_RENAME_REFACTORING.md)** (3-4 hours)
+   - Add Rope dependency
+   - Create refactoring module
+   - Implement rename tool
+   - **Enables**: Foundation for all Rope refactoring features
+
+2. **[FEATURE_02: Backend Switching](./FEATURE_02_BACKEND_SWITCHING.md)** (4-6 hours)
+   - **Requires**: FEATURE_01
+   - Backend configuration system
+   - Rope client integration
+   - Dual-path tool dispatch
+   - **Enables**: Runtime switching between Rope (fast) and Pyright (accurate)
+
+### Phase 2: Advanced Refactoring (Week 2)
+
+3. **[FEATURE_03: Move Refactoring](./FEATURE_03_MOVE_REFACTORING.md)** (5-7 hours)
+   - **Requires**: FEATURE_01
+   - Extend refactoring module
+   - Module relocation logic
+   - Import update tracking
+
+4. **FEATURE_04: Change Signature** (4-6 hours) - ⚠️ Not yet documented
+   - **Requires**: FEATURE_01
+   - Parameter modification
+   - Call site updates
+
+### Phase 3: LSP Enhancements (Week 3) - Code Quality
+
+**Independent from Rope features** - can implement in parallel:
+
+5. **[FEATURE_10: Code Actions](./FEATURE_10_CODE_ACTIONS.md)** (2-3 hours)
+   - Quick fixes and refactorings
+   - Import management
+   - **High value**: Enables AI to fix errors automatically
+
+6. **[FEATURE_11: Document Formatting](./FEATURE_11_DOCUMENT_FORMATTING.md)** (1-2 hours)
+   - Full document PEP 8 formatting
+   - **High value**: Essential for code quality
+
+7. **[FEATURE_12: Range Formatting](./FEATURE_12_RANGE_FORMATTING.md)** (1 hour)
+   - Partial document formatting
+   - **Depends on**: FEATURE_11 pattern
+
+### Phase 4: Workspace Features (Week 4)
+
+8. **[FEATURE_13: Workspace Symbols](./FEATURE_13_WORKSPACE_SYMBOLS.md)** (1-2 hours)
+   - Search symbols across workspace
+   - Code discovery without file navigation
+
+9. **Additional Features** (TBD)
+   - FEATURE_05: Pyright Diagnostics
+   - FEATURE_06: Signature Help
+   - FEATURE_07: Update Document
+   - FEATURE_08: Regex Search
+   - FEATURE_09: Status Tool
+
+---
+
+## 🏗️ Current Architecture Overview
+
+Before implementing features, understand the existing architecture:
 
 ### Core Files
 
@@ -48,7 +181,7 @@ Before implementing new features, understand the existing architecture:
   - `has_capability(capability_path)` - Check server support
   - `notify_document_open()` - Document lifecycle
 
-**`src/python_lsp_mcp/lsp_manager.py`** (not visible, need to read):
+**`src/python_lsp_mcp/lsp_manager.py`**:
 - Multi-LSP routing by extension/language
 - Client lifecycle management
 
@@ -70,9 +203,279 @@ Before implementing new features, understand the existing architecture:
 
 ---
 
-## Phase 1: Code Quality Essentials
+## 🔍 Reference Implementation Analysis
 
-### Feature 1.1: textDocument/codeAction
+### Source: repos/python_lsp_mcp-0.3.0
+
+This is a **feature-rich implementation** we're learning from:
+
+**Architecture Highlights**:
+- **Dual Backend System**: Rope (fast, local) + Pyright (accurate, type-aware)
+- **Runtime Switching**: Change backends without restarting server
+- **Rich Refactoring**: Rename, move, change signature using Rope
+- **Advanced LSP**: Signature help, diagnostics, incremental updates
+- **Developer Tools**: Hot reload, status inspection, search
+
+**Feature Count**: 15 tools (vs our current 5)
+
+**What We Can Learn**:
+- ✅ Backend abstraction pattern
+- ✅ Rope refactoring patterns
+- ✅ Configuration management
+- ✅ Error handling strategies
+- ✅ Tool description best practices
+
+---
+
+## 📊 Progress Tracking
+
+### Completion Status
+
+**Refactoring Foundation**: 0/2 complete (0%)
+- [ ] FEATURE_01: Rename Refactoring
+- [ ] FEATURE_02: Backend Switching
+
+**Advanced Refactoring**: 0/2 complete (0%)
+- [ ] FEATURE_03: Move Refactoring
+- [ ] FEATURE_04: Change Signature (not yet documented)
+
+**LSP Enhancements**: 0/4 complete (0%)
+- [ ] FEATURE_10: Code Actions
+- [ ] FEATURE_11: Document Formatting
+- [ ] FEATURE_12: Range Formatting
+- [ ] FEATURE_13: Workspace Symbols
+
+**Additional Features**: 0/5 complete (0%)
+- [ ] FEATURE_05: Pyright Diagnostics (not yet documented)
+- [ ] FEATURE_06: Signature Help (not yet documented)
+- [ ] FEATURE_07: Update Document (not yet documented)
+- [ ] FEATURE_08: Regex Search (not yet documented)
+- [ ] FEATURE_09: Status Tool (not yet documented)
+
+**Overall Progress**: 0/13 features (0%)
+
+---
+
+## 🎯 Quick Reference
+
+### File Locations
+
+- **Server logic**: `src/python_lsp_mcp/server.py`
+- **Integration tests**: `tests/test_integration.py`
+- **Configuration**: `src/python_lsp_mcp/config.py`
+- **LSP client**: `src/python_lsp_mcp/lsp_client.py`
+- **LSP manager**: `src/python_lsp_mcp/lsp_manager.py`
+- **Refactoring module**: `src/python_lsp_mcp/refactoring/` (will be created in FEATURE_01)
+- **Documentation**: `README.md`
+
+### Useful Commands
+
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Run specific test
+pytest tests/test_integration.py::TestIntegration::test_feature -v
+
+# Type check
+mypy src/
+
+# Lint
+ruff check src/
+
+# Format
+ruff format src/
+
+# Test with MCP CLI
+python-lsp-mcp --config config.toml --verbose
+```
+
+---
+
+## 🧪 Development Best Practices
+
+### Code Patterns to Follow
+
+**1. Input Validation**:
+```python
+# Always validate file exists first
+is_valid, error_msg = validate_file(file_path)
+if not is_valid:
+    return [{"type": "text", "text": f"Error: {error_msg}"}]
+```
+
+**2. Capability Checking**:
+```python
+# Always check LSP server supports the feature
+cap_error = await check_capability(lsp_client, "featureProvider", "feature name")
+if cap_error:
+    return cap_error
+```
+
+**3. Document Lifecycle**:
+```python
+# Always notify document open before LSP requests
+await lsp_client.notify_document_open(str(file_path.absolute()), "python")
+```
+
+**4. Error Handling**:
+```python
+try:
+    # ... implementation
+except Exception as e:
+    logger.error(f"Error in tool_name: {e}", exc_info=True)
+    return [{"type": "text", "text": f"Error message: {e}"}]
+```
+
+**5. Response Formatting**:
+```python
+# Always return list of dicts with type and text
+return [{"type": "text", "text": "result message"}]
+```
+
+### Testing Patterns
+
+**Integration Test Template**:
+```python
+@pytest.mark.asyncio
+async def test_feature_request(self, workspace_dir, sample_python_file):
+    """Test [feature] request end-to-end."""
+    config = create_test_config(workspace_dir)
+    config.workspace = workspace_dir
+    
+    server, manager = create_server(config)
+    
+    try:
+        await manager.start_all()
+        
+        arguments = {
+            "file": str(sample_python_file),
+            # ... other arguments
+        }
+        
+        result = await server.call_tool("tool_name", arguments)
+        
+        # Verify response format
+        assert isinstance(result, list)
+        assert len(result) > 0
+        assert "type" in result[0]
+        assert "text" in result[0]
+        
+        # Verify content
+        text = result[0]["text"]
+        assert "expected content" in text.lower()
+        
+    finally:
+        await manager.shutdown_all()
+```
+
+---
+
+## 📚 Additional Resources
+
+### Documentation
+- **MCP Specification**: https://modelcontextprotocol.io/specification/draft
+- **LSP Specification**: https://microsoft.github.io/language-server-protocol/
+- **Rope Documentation**: https://github.com/python-rope/rope
+- **Pyright Documentation**: https://github.com/microsoft/pyright
+- **pylsp**: https://github.com/python-lsp/python-lsp-server
+
+### Reference Implementations
+- **repos/python_lsp_mcp-0.3.0**: Complete feature-rich implementation
+- **Rope Examples**: https://rope.readthedocs.io/en/latest/
+- **LSP Samples**: https://github.com/microsoft/language-server-protocol/tree/main/samples
+
+---
+
+## 🚀 Getting Started
+
+### To Implement a Feature:
+
+1. **Read feature document**: Start with `FEATURE_XX_NAME.md`
+2. **Check dependencies**: Ensure prerequisite features are complete
+3. **Review reference**: Study `repos/python_lsp_mcp-0.3.0` implementation (if applicable)
+4. **Follow phases**: Implement step-by-step as documented
+5. **Test thoroughly**: Run unit tests, integration tests, manual verification
+6. **Update documentation**: README.md, this file's progress tracking
+
+### To Create a New Feature Document:
+
+Use this template structure:
+
+```markdown
+# Feature: [Feature Name]
+
+**Feature ID**: FEATURE_XX
+**Priority**: HIGH/MEDIUM/LOW
+**Complexity**: LOW/MEDIUM/HIGH
+**Estimated Time**: X-Y hours
+**Implementation Status**: ❌ NOT STARTED
+**LSP Method**: method_name (if applicable)
+**LSP Capability**: capabilityName (if applicable)
+
+---
+
+## Overview
+[What this feature does and why it matters]
+
+## Current State Analysis
+[What we have, what we need, gaps from reference]
+
+## Implementation Strategy
+[Phase-by-phase implementation steps with code examples]
+
+## Testing Plan
+[Unit tests, integration tests, verification]
+
+## Verification Checklist
+[Checkboxes for completion criteria]
+
+## Usage Examples
+[Practical examples of tool usage]
+
+## References
+[Links to specs, docs, reference implementations]
+```
+
+---
+
+## 💡 Key Decisions
+
+### Why Modular Feature Documents?
+
+**Problem**: 1672-line monolithic file was hard for AI agents to:
+- Navigate and find relevant sections
+- Load into context window efficiently
+- Update without affecting unrelated content
+- Implement in parallel
+
+**Solution**: Split into self-contained feature documents
+- ✅ Each feature is 300-600 lines (fits well in context)
+- ✅ Clear file naming (`FEATURE_XX_NAME.md`)
+- ✅ No cross-referencing needed within feature docs
+- ✅ Enables parallel implementation by multiple agents/developers
+
+### Why Two Feature Categories?
+
+**Refactoring Features** (FEATURE_01-09):
+- From reference implementation (repos/v0.3.0)
+- Rope-based or Pyright-based
+- More complex, require new dependencies
+- 3-7 hours each
+
+**LSP Method Features** (FEATURE_10+):
+- From original development plans
+- Use existing LSP servers (pylsp/pyright)
+- Simpler, extend existing patterns
+- 1-3 hours each
+
+---
+
+**End of Master Development Plans v3.0.0**
+
+**Last Updated**: February 6, 2026  
+**Next Steps**: Choose a feature from the recommended order above and start implementation!
+
 
 **Priority**: HIGH  
 **Complexity**: MEDIUM  

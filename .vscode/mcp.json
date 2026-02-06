@@ -1,0 +1,33 @@
+{
+	"servers": {
+		"analyzer": {
+			"command": "uvx",
+			"args": [
+				"mcp-server-analyzer"
+			],
+			"type": "stdio"
+		},
+		"memory-bank-mcp": {
+			"type": "stdio",
+			"command": "node",
+			"args": [
+				"/home/diaz/mygit/memory-bank-mcp/build/index.js",
+				"--mode",
+				"code"
+			],
+			"env": {}
+		},
+		"python-lsp-mcp": {
+			"type": "stdio",
+			"command": "uvx",
+			"args": [
+				"python-lsp-mcp",
+				"--lsp-command",
+				"pylsp",
+				"--workspace",
+				"/home/diaz/mygit/python-lsp-mcp"
+			],
+			"env": {}
+		}
+	}
+}
