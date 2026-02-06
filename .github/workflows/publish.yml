@@ -3,7 +3,7 @@ name: Publish to PyPI
 on:
   release:
     types: [published]
-  # Allow manual triggering from the Actions tab
+
   workflow_dispatch:
 
 permissions:
@@ -43,10 +43,8 @@ jobs:
     needs: [build]
 
     permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
 
-    # Dedicated environment with protections for publishing
     environment:
       name: pypi
       url: https://pypi.org/p/py-lsp-mcp
@@ -60,6 +58,8 @@ jobs:
 
       - name: Publish release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
 
   publish-to-testpypi:
     name: Publish to TestPyPI
@@ -71,7 +71,7 @@ jobs:
 
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/python-lsp-mcp-test
+      url: https://test.pypi.org/p/py-lsp-mcp
 
     steps:
       - name: Retrieve release distributions
@@ -84,3 +84,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
