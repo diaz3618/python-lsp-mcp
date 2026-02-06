@@ -1,0 +1,49 @@
+{
+	"servers": {
+		"analyzer": {
+			"command": "uvx",
+			"args": [
+				"mcp-server-analyzer"
+			],
+			"type": "stdio"
+		},
+		"memory-bank-mcp": {
+			"type": "stdio",
+			"command": "node",
+			"args": [
+				"/home/diaz/mygit/memory-bank-mcp/build/index.js",
+				"--mode",
+				"code"
+			],
+			"env": {}
+		},
+		// Python LSP-MCP: PyPI version (recommended)
+		"python-lsp-mcp": {
+			"type": "stdio",
+			"command": "uvx",
+			"args": [
+				"python-lsp-mcp",
+				"--lsp-command",
+				"pylsp",
+				"--workspace",
+				"/home/diaz/mygit/python-lsp-mcp"
+			],
+			"env": {}
+		}
+		// Alternative: GitHub version (for latest development features)
+		// "python-lsp-mcp-github": {
+		// 	"type": "stdio",
+		// 	"command": "uvx",
+		// 	"args": [
+		// 		"--from",
+		// 		"git+https://github.com/diaz3618/python-lsp-mcp.git",
+		// 		"python-lsp-mcp",
+		// 		"--lsp-command",
+		// 		"pylsp",
+		// 		"--workspace",
+		// 		"/home/diaz/mygit/python-lsp-mcp"
+		// 	],
+		// 	"env": {}
+		// }
+	}
+}
