@@ -563,13 +563,6 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
 
         return [{"type": "text", "text": "\n".join(info_lines)}]
 
-    # Cleanup handler
-    @server.on_close()  # type: ignore[attr-defined]
-    async def on_close() -> None:
-        """Cleanup when server is shutting down."""
-        logger.info("Shutting down LSP servers...")
-        await lsp_manager.shutdown_all()
-
     return server, lsp_manager
 
 
