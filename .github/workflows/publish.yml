@@ -71,7 +71,7 @@ jobs:
 
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/py-lsp-mcp
+      url: https://test.pypi.org/p/python-lsp-mcp-test
 
     steps:
       - name: Retrieve release distributions
