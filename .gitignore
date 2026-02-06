@@ -322,4 +322,7 @@ lsp-mcp_original-project
 # Memory Bank MCP creates nested structure due to bug
 home/
 memory-bank/
+tests/
 docs/research
+docs/setup
+docs/publishing
