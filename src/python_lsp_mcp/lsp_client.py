@@ -64,18 +64,15 @@ class LSPClient:
 
             logger.info("Sending initialize request...")
             result = await self.client.protocol.send_request_async("initialize", init_params)
-            # Result is an lsprotocol Object, convert to dict
-            if hasattr(result, "__dict__"):
-                result_dict = result.__dict__
-            elif hasattr(result, "_asdict"):
-                result_dict = result._asdict()
-            else:
-                result_dict = result
-
-            if isinstance(result_dict, dict):
-                self.server_capabilities = result_dict.get("capabilities", {})
+            
+            # Extract capabilities from result
+            # Result is a pygls.protocol.Object with capabilities as an attribute
+            if hasattr(result, "capabilities"):
+                # Store the capabilities object directly (it has attributes, not dict keys)
+                self.server_capabilities = result.capabilities
             else:
                 self.server_capabilities = {}
+            
             logger.info("LSP server initialized successfully")
 
             # Send initialized notification
@@ -164,22 +161,26 @@ class LSPClient:
             },
         )
 
-    def has_capability(self, capability_path: str) -> bool:
+    def has_capability(self, capability_name: str) -> bool:
         """Check if LSP server has a specific capability.
 
         Args:
-            capability_path: Dot-separated path to capability
-                            (e.g., "textDocument.hover")
+            capability_name: Capability name (e.g., "hoverProvider", "definitionProvider")
 
         Returns:
             True if capability is supported
         """
-        parts = capability_path.split(".")
-        current = self.server_capabilities
-
-        for part in parts:
-            if not isinstance(current, dict) or part not in current:
-                return False
-            current = current[part]
-
-        return True
+        if not self.server_capabilities:
+            return False
+        
+        # Check if the capabilities object has the attribute
+        if hasattr(self.server_capabilities, capability_name):
+            value = getattr(self.server_capabilities, capability_name)
+            # Capability is supported if it's truthy (True, dict, etc.)
+            return value is not None and value is not False
+        
+        # Fallback to dict-style access if capabilities is a dict
+        if isinstance(self.server_capabilities, dict):
+            return capability_name in self.server_capabilities
+        
+        return False
