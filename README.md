@@ -2,7 +2,14 @@
 
 A Model Context Protocol (MCP) server that bridges LLMs with Language Server Protocol (LSP) servers for Python code analysis.
 
-[![Tests](https://img.shields.io/badge/tests-28%20passed-brightgreen)](tests/)
+[![Create Release](https://github.com/diaz3618/python-lsp-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/diaz3618/python-lsp-mcp/actions/workflows/release.yml)
+[![Publish to PyPI](https://github.com/diaz3618/python-lsp-mcp/actions/workflows/publish.yml/badge.svg)](https://github.com/diaz3618/python-lsp-mcp/actions/workflows/publish.yml)
+
+[![Tests](https://github.com/diaz3618/python-lsp-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/diaz3618/python-lsp-mcp/actions/workflows/test.yml)
+[![CodeQL Analysis](https://github.com/diaz3618/python-lsp-mcp/actions/workflows/codeql.yml/badge.svg)](https://github.com/diaz3618/python-lsp-mcp/actions/workflows/codeql.yml)
+[![Trivy Security Scan](https://github.com/diaz3618/python-lsp-mcp/actions/workflows/trivy.yml/badge.svg)](https://github.com/diaz3618/python-lsp-mcp/actions/workflows/trivy.yml)
+[![Semgrep Security Scan](https://github.com/diaz3618/python-lsp-mcp/actions/workflows/semgrep.yml/badge.svg)](https://github.com/diaz3618/python-lsp-mcp/actions/workflows/semgrep.yml)
+
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -12,6 +19,8 @@ A Model Context Protocol (MCP) server that bridges LLMs with Language Server Pro
 - **Language-Aware Routing**: Automatic routing by file extension or language ID
 - **MCP Tools**: Expose LSP methods as MCP tools for AI agents
 - **Async Architecture**: Built on asyncio for efficient I/O
+- **Robust Error Handling**: File validation, capability checking, and timeout support
+- **Eager Initialization**: Optional pre-startup of all LSP servers
 - **Comprehensive Testing**: 28 tests covering all functionality
 
 ## Available Tools
@@ -55,7 +64,7 @@ pip install -e .
 
 ```bash
 # pylsp (recommended)
-pip install python-lsp-server
+pip install py-lsp-server
 
 # or pyright
 npm install -g pyright
@@ -88,6 +97,32 @@ args = []
 extensions = [".py", ".pyi"]
 languages = ["python"]
 ```
+
+### Configuration Options
+
+#### eager_init (optional)
+
+Start all configured LSP servers immediately at launch instead of lazy-loading them on first use.
+
+```toml
+# Enable eager initialization
+eager_init = true
+
+[[lsps]]
+id = "pylsp"
+command = "pylsp"
+# ... other settings
+```
+
+**Benefits**:
+- Faster first request (servers already initialized)
+- Early detection of LSP server issues
+
+**Trade-offs**:
+- Slower startup time
+- Higher initial resource usage
+
+**Default**: `false` (lazy loading)
 
 ## Setup for AI Clients
 
