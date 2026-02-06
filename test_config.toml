@@ -1,9 +1,0 @@
-workspace = "/home/diaz/mygit/python-lsp-mcp"
-eager_init = true
-
-[[lsps]]
-id = "test_pylsp"
-command = "pylsp"
-args = []
-extensions = [".py", ".pyi"]
-languages = ["python"]

@@ -228,3 +228,4 @@ lsp-mcp_original-project
 .github/copilot-instructions.md
 logs/
 docs/development_plans
+tests/tmp
