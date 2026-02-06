@@ -1,5 +1,6 @@
 """LSP Client wrapper using pygls."""
 
+import asyncio
 import logging
 from pathlib import Path
 from typing import Any
@@ -110,20 +111,33 @@ class LSPClient:
         """Check if LSP server is started and ready."""
         return self._started
 
-    async def send_request(self, method: str, params: Any) -> Any:
-        """Send a request to the LSP server.
+    async def send_request(self, method: str, params: Any, timeout: float = 30.0) -> Any:
+        """Send a request to the LSP server with timeout.
 
         Args:
             method: LSP method name (e.g., "textDocument/hover")
             params: Request parameters
+            timeout: Timeout in seconds (default: 30.0)
 
         Returns:
             Response from LSP server
+
+        Raises:
+            RuntimeError: If LSP client not started
+            asyncio.TimeoutError: If request exceeds timeout
         """
         if not self._started or not self.client:
             raise RuntimeError("LSP client not started")
 
-        return await self.client.protocol.send_request_async(method, params)
+        try:
+            return await asyncio.wait_for(
+                self.client.protocol.send_request_async(method, params), timeout=timeout
+            )
+        except TimeoutError:
+            logger.error(f"LSP request '{method}' timed out after {timeout}s")
+            raise TimeoutError(
+                f"LSP request '{method}' timed out after {timeout} seconds"
+            ) from None
 
     async def notify_document_open(self, file_path: str, language_id: str) -> None:
         """Notify LSP server that a document was opened.

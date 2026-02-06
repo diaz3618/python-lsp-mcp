@@ -8,7 +8,7 @@ on:
   workflow_dispatch: {}
   # Scan mainline branches and report all findings
   push:
-    branches: [main, develop]
+    branches: [main, feature/improvements-and-features]
   # Schedule daily scans
   schedule:
     # Run at 3:00 AM UTC every day

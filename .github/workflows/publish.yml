@@ -47,7 +47,7 @@ jobs:
     # Dedicated environment with protections for publishing
     environment:
       name: pypi
-      url: https://pypi.org/p/python-lsp-mcp
+      url: https://pypi.org/p/py-lsp-mcp
 
     steps:
       - name: Retrieve release distributions
@@ -69,7 +69,7 @@ jobs:
 
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/python-lsp-mcp
+      url: https://test.pypi.org/p/python-lsp-mcp-test
 
     steps:
       - name: Retrieve release distributions

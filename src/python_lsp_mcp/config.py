@@ -32,6 +32,9 @@ class Config(BaseModel):
     methods: list[str] | None = Field(
         default=None, description="Optional list of LSP methods to expose as tools"
     )
+    eager_init: bool = Field(
+        default=False, description="Whether to start all LSP servers at launch (default: False)"
+    )
 
 
 def load_config(config_path: Path) -> Config:

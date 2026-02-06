@@ -64,17 +64,54 @@ class CompletionInput(BaseModel):
     lsp_id: str | None = Field(None, description="Specific LSP server ID to use (optional)")
 
 
-def create_server(config: Config) -> Server:
+def create_server(config: Config) -> tuple[Server, LSPManager]:
     """Create and configure the MCP server.
 
     Args:
         config: Configuration for LSP servers and MCP server
 
     Returns:
-        Configured Server instance
+        Tuple of (configured Server instance, LSPManager instance)
     """
     server = Server("python-lsp-mcp")
     lsp_manager = LSPManager(config)
+
+    def validate_file(file_path: Path) -> tuple[bool, str | None]:
+        """Validate that a file exists and is a file.
+
+        Args:
+            file_path: Path to validate
+
+        Returns:
+            Tuple of (is_valid, error_message). If valid, error_message is None.
+        """
+        if not file_path.exists():
+            return False, f"File not found: {file_path}"
+        if not file_path.is_file():
+            return False, f"Path is not a file: {file_path}"
+        return True, None
+
+    async def check_capability(
+        lsp_client: Any, capability: str, tool_name: str
+    ) -> list[dict[str, str]] | None:
+        """Check if LSP supports capability, return error message if not.
+
+        Args:
+            lsp_client: The LSP client to check
+            capability: Capability path (e.g., 'hoverProvider')
+            tool_name: Name of tool for error message
+
+        Returns:
+            None if capability exists, error message list if not
+        """
+        if not lsp_client.has_capability(capability):
+            return [
+                {
+                    "type": "text",
+                    "text": f"LSP server '{lsp_client.server_id}' doesn't support {tool_name}",
+                }
+            ]
+        return None
 
     # Tool: textDocument/hover
     @server.call_tool()
@@ -86,51 +123,66 @@ def create_server(config: Config) -> Server:
         input_data = HoverInput(**arguments)
         file_path = Path(input_data.file)
 
+        # Validate file exists
+        is_valid, error_msg = validate_file(file_path)
+        if not is_valid:
+            return [{"type": "text", "text": f"Error: {error_msg}"}]
+
         # Get appropriate LSP client
         if input_data.lsp_id:
             lsp_client = lsp_manager.get_lsp_by_id(input_data.lsp_id)
         else:
             lsp_client = lsp_manager.get_lsp_by_extension(file_path)
 
-        # Ensure client is started
-        if not lsp_client.is_started():
-            await lsp_client.start()
+        try:
+            # Ensure client is started
+            if not lsp_client.is_started():
+                await lsp_client.start()
 
-        # Notify document open
-        await lsp_client.notify_document_open(str(file_path.absolute()), "python")
+            # Check capability
+            cap_error = await check_capability(lsp_client, "hoverProvider", "hover")
+            if cap_error:
+                return cap_error
 
-        # Send hover request
-        from lsprotocol.types import (
-            HoverParams,
-            Position,
-            TextDocumentIdentifier,
-        )
+            # Notify document open
+            await lsp_client.notify_document_open(str(file_path.absolute()), "python")
 
-        params = HoverParams(
-            text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-            position=Position(line=input_data.line, character=input_data.character),
-        )
+            # Send hover request
+            from lsprotocol.types import (
+                HoverParams,
+                Position,
+                TextDocumentIdentifier,
+            )
 
-        response = await lsp_client.send_request("textDocument/hover", params)
+            params = HoverParams(
+                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
+                position=Position(line=input_data.line, character=input_data.character),
+            )
 
-        # Format response
-        if response and response.contents:
-            contents = response.contents
-            if isinstance(contents, str):
-                text = contents
-            elif isinstance(contents, dict):
-                text = contents.get("value", str(contents))
-            elif isinstance(contents, list):
-                text = "\n".join(
-                    item.get("value", str(item)) if isinstance(item, dict) else str(item)
-                    for item in contents
-                )
-            else:
-                text = str(contents)
+            response = await lsp_client.send_request("textDocument/hover", params)
 
-            return [{"type": "text", "text": text}]
+            # Format response
+            if response and response.contents:
+                contents = response.contents
+                if isinstance(contents, str):
+                    text = contents
+                elif isinstance(contents, dict):
+                    text = contents.get("value", str(contents))
+                elif isinstance(contents, list):
+                    text = "\n".join(
+                        item.get("value", str(item)) if isinstance(item, dict) else str(item)
+                        for item in contents
+                    )
+                else:
+                    text = str(contents)
 
-        return [{"type": "text", "text": "No hover information available"}]
+                return [{"type": "text", "text": text}]
+
+            return [{"type": "text", "text": "No hover information available"}]
+
+        except Exception as e:
+            logger.error(f"Error in textDocument_hover: {e}", exc_info=True)
+            return [{"type": "text", "text": f"Error getting hover information: {e}"}]
 
     # Tool: textDocument/definition
     @server.call_tool()
@@ -142,58 +194,73 @@ def create_server(config: Config) -> Server:
         input_data = DefinitionInput(**arguments)
         file_path = Path(input_data.file)
 
+        # Validate file exists
+        is_valid, error_msg = validate_file(file_path)
+        if not is_valid:
+            return [{"type": "text", "text": f"Error: {error_msg}"}]
+
         # Get appropriate LSP client
         if input_data.lsp_id:
             lsp_client = lsp_manager.get_lsp_by_id(input_data.lsp_id)
         else:
             lsp_client = lsp_manager.get_lsp_by_extension(file_path)
 
-        # Ensure client is started
-        if not lsp_client.is_started():
-            await lsp_client.start()
+        try:
+            # Ensure client is started
+            if not lsp_client.is_started():
+                await lsp_client.start()
 
-        # Notify document open
-        await lsp_client.notify_document_open(str(file_path.absolute()), "python")
+            # Check capability
+            cap_error = await check_capability(lsp_client, "definitionProvider", "definition")
+            if cap_error:
+                return cap_error
 
-        # Send definition request
-        from lsprotocol.types import (
-            DefinitionParams,
-            Position,
-            TextDocumentIdentifier,
-        )
+            # Notify document open
+            await lsp_client.notify_document_open(str(file_path.absolute()), "python")
 
-        params = DefinitionParams(
-            text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-            position=Position(line=input_data.line, character=input_data.character),
-        )
+            # Send definition request
+            from lsprotocol.types import (
+                DefinitionParams,
+                Position,
+                TextDocumentIdentifier,
+            )
 
-        response = await lsp_client.send_request("textDocument/definition", params)
+            params = DefinitionParams(
+                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
+                position=Position(line=input_data.line, character=input_data.character),
+            )
 
-        # Format response
-        if not response:
-            return [{"type": "text", "text": "No definition found"}]
+            response = await lsp_client.send_request("textDocument/definition", params)
 
-        # Response can be Location, Location[], or LocationLink[]
-        locations = response if isinstance(response, list) else [response]
+            # Format response
+            if not response:
+                return [{"type": "text", "text": "No definition found"}]
 
-        result_lines = []
-        for loc in locations:
-            if hasattr(loc, "uri"):
-                uri = loc.uri
-                range_info = loc.range if hasattr(loc, "range") else None
-                if range_info:
-                    result_lines.append(
-                        f"File: {uri}\n"
-                        f"Line: {range_info.start.line + 1}\n"
-                        f"Character: {range_info.start.character}"
-                    )
-                else:
-                    result_lines.append(f"File: {uri}")
+            # Response can be Location, Location[], or LocationLink[]
+            locations = response if isinstance(response, list) else [response]
 
-        if result_lines:
-            return [{"type": "text", "text": "\n\n".join(result_lines)}]
+            result_lines = []
+            for loc in locations:
+                if hasattr(loc, "uri"):
+                    uri = loc.uri
+                    range_info = loc.range if hasattr(loc, "range") else None
+                    if range_info:
+                        result_lines.append(
+                            f"File: {uri}\n"
+                            f"Line: {range_info.start.line + 1}\n"
+                            f"Character: {range_info.start.character}"
+                        )
+                    else:
+                        result_lines.append(f"File: {uri}")
 
-        return [{"type": "text", "text": "Definition found but could not be parsed"}]
+            if result_lines:
+                return [{"type": "text", "text": "\n\n".join(result_lines)}]
+
+            return [{"type": "text", "text": "Definition found but could not be parsed"}]
+
+        except Exception as e:
+            logger.error(f"Error in textDocument_definition: {e}", exc_info=True)
+            return [{"type": "text", "text": f"Error getting definition: {e}"}]
 
     # Tool: textDocument/references
     @server.call_tool()
@@ -205,57 +272,72 @@ def create_server(config: Config) -> Server:
         input_data = ReferencesInput(**arguments)
         file_path = Path(input_data.file)
 
+        # Validate file exists
+        is_valid, error_msg = validate_file(file_path)
+        if not is_valid:
+            return [{"type": "text", "text": f"Error: {error_msg}"}]
+
         # Get appropriate LSP client
         if input_data.lsp_id:
             lsp_client = lsp_manager.get_lsp_by_id(input_data.lsp_id)
         else:
             lsp_client = lsp_manager.get_lsp_by_extension(file_path)
 
-        # Ensure client is started
-        if not lsp_client.is_started():
-            await lsp_client.start()
+        try:
+            # Ensure client is started
+            if not lsp_client.is_started():
+                await lsp_client.start()
 
-        # Notify document open
-        await lsp_client.notify_document_open(str(file_path.absolute()), "python")
+            # Check capability
+            cap_error = await check_capability(lsp_client, "referencesProvider", "references")
+            if cap_error:
+                return cap_error
 
-        # Send references request
-        params = {
-            "textDocument": {"uri": f"file://{file_path.absolute()}"},
-            "position": {"line": input_data.line, "character": input_data.character},
-            "context": {"includeDeclaration": True},
-        }
+            # Notify document open
+            await lsp_client.notify_document_open(str(file_path.absolute()), "python")
 
-        response = await lsp_client.send_request("textDocument/references", params)
+            # Send references request
+            params = {
+                "textDocument": {"uri": f"file://{file_path.absolute()}"},
+                "position": {"line": input_data.line, "character": input_data.character},
+                "context": {"includeDeclaration": True},
+            }
 
-        # Format response
-        if not response:
-            return [{"type": "text", "text": "No references found"}]
+            response = await lsp_client.send_request("textDocument/references", params)
 
-        result_lines = [f"Found {len(response)} reference(s):"]
-        for ref in response:
-            if isinstance(ref, dict):
-                uri = ref.get("uri", "")
-                range_info = ref.get("range", {})
-            else:
-                uri = getattr(ref, "uri", "")
-                range_info = getattr(ref, "range", {})
+            # Format response
+            if not response:
+                return [{"type": "text", "text": "No references found"}]
 
-            if isinstance(range_info, dict):
-                start = range_info.get("start", {})
-            else:
-                start = getattr(range_info, "start", {})
+            result_lines = [f"Found {len(response)} reference(s):"]
+            for ref in response:
+                if isinstance(ref, dict):
+                    uri = ref.get("uri", "")
+                    range_info = ref.get("range", {})
+                else:
+                    uri = getattr(ref, "uri", "")
+                    range_info = getattr(ref, "range", {})
 
-            if isinstance(start, dict):
-                line = start.get("line", -1)
-                char = start.get("character", -1)
-            else:
-                line = getattr(start, "line", -1)
-                char = getattr(start, "character", -1)
+                if isinstance(range_info, dict):
+                    start = range_info.get("start", {})
+                else:
+                    start = getattr(range_info, "start", {})
 
-            file_name = Path(uri.replace("file://", "")).name if uri else "unknown"
-            result_lines.append(f"  - {file_name}:{line + 1}:{char + 1}")
+                if isinstance(start, dict):
+                    line = start.get("line", -1)
+                    char = start.get("character", -1)
+                else:
+                    line = getattr(start, "line", -1)
+                    char = getattr(start, "character", -1)
 
-        return [{"type": "text", "text": "\n".join(result_lines)}]
+                file_name = Path(uri.replace("file://", "")).name if uri else "unknown"
+                result_lines.append(f"  - {file_name}:{line + 1}:{char + 1}")
+
+            return [{"type": "text", "text": "\n".join(result_lines)}]
+
+        except Exception as e:
+            logger.error(f"Error in textDocument_references: {e}", exc_info=True)
+            return [{"type": "text", "text": f"Error finding references: {e}"}]
 
     # Tool: textDocument/documentSymbol
     @server.call_tool()
@@ -267,69 +349,86 @@ def create_server(config: Config) -> Server:
         input_data = DocumentSymbolInput(**arguments)
         file_path = Path(input_data.file)
 
+        # Validate file exists
+        is_valid, error_msg = validate_file(file_path)
+        if not is_valid:
+            return [{"type": "text", "text": f"Error: {error_msg}"}]
+
         # Get appropriate LSP client
         if input_data.lsp_id:
             lsp_client = lsp_manager.get_lsp_by_id(input_data.lsp_id)
         else:
             lsp_client = lsp_manager.get_lsp_by_extension(file_path)
 
-        # Ensure client is started
-        if not lsp_client.is_started():
-            await lsp_client.start()
+        try:
+            # Ensure client is started
+            if not lsp_client.is_started():
+                await lsp_client.start()
 
-        # Notify document open
-        await lsp_client.notify_document_open(str(file_path.absolute()), "python")
+            # Check capability
+            cap_error = await check_capability(
+                lsp_client, "documentSymbolProvider", "document symbols"
+            )
+            if cap_error:
+                return cap_error
 
-        # Send document symbol request
-        params = {"textDocument": {"uri": f"file://{file_path.absolute()}"}}
+            # Notify document open
+            await lsp_client.notify_document_open(str(file_path.absolute()), "python")
 
-        response = await lsp_client.send_request("textDocument/documentSymbol", params)
+            # Send document symbol request
+            params = {"textDocument": {"uri": f"file://{file_path.absolute()}"}}
 
-        # Format response
-        if not response:
-            return [{"type": "text", "text": "No symbols found"}]
+            response = await lsp_client.send_request("textDocument/documentSymbol", params)
 
-        def format_symbol(symbol: Any, indent: int = 0) -> list[str]:
-            """Recursively format symbol information."""
-            prefix = "  " * indent
-            if isinstance(symbol, dict):
-                name = symbol.get("name", "")
-                kind = symbol.get("kind", 0)
-            else:
-                name = getattr(symbol, "name", "")
-                kind = getattr(symbol, "kind", 0)
+            # Format response
+            if not response:
+                return [{"type": "text", "text": "No symbols found"}]
 
-            # Symbol kind mapping (simplified)
-            kind_names = {
-                1: "File",
-                2: "Module",
-                3: "Namespace",
-                4: "Package",
-                5: "Class",
-                6: "Method",
-                12: "Function",
-                13: "Variable",
-                14: "Constant",
-            }
-            kind_name = kind_names.get(kind, f"Kind{kind}")
+            def format_symbol(symbol: Any, indent: int = 0) -> list[str]:
+                """Recursively format symbol information."""
+                prefix = "  " * indent
+                if isinstance(symbol, dict):
+                    name = symbol.get("name", "")
+                    kind = symbol.get("kind", 0)
+                else:
+                    name = getattr(symbol, "name", "")
+                    kind = getattr(symbol, "kind", 0)
 
-            lines = [f"{prefix}{kind_name}: {name}"]
+                # Symbol kind mapping (simplified)
+                kind_names = {
+                    1: "File",
+                    2: "Module",
+                    3: "Namespace",
+                    4: "Package",
+                    5: "Class",
+                    6: "Method",
+                    12: "Function",
+                    13: "Variable",
+                    14: "Constant",
+                }
+                kind_name = kind_names.get(kind, f"Kind{kind}")
 
-            # Process children
-            if isinstance(symbol, dict):
-                children = symbol.get("children", [])
-            else:
-                children = getattr(symbol, "children", [])
-            for child in children:
-                lines.extend(format_symbol(child, indent + 1))
+                lines = [f"{prefix}{kind_name}: {name}"]
 
-            return lines
+                # Process children
+                if isinstance(symbol, dict):
+                    children = symbol.get("children", [])
+                else:
+                    children = getattr(symbol, "children", [])
+                for child in children:
+                    lines.extend(format_symbol(child, indent + 1))
 
-        result_lines = ["Document Symbols:"]
-        for symbol in response:
-            result_lines.extend(format_symbol(symbol))
+                return lines
 
-        return [{"type": "text", "text": "\n".join(result_lines)}]
+            result_lines = ["Document Symbols:"]
+            for symbol in response:
+                result_lines.extend(format_symbol(symbol))
+
+            return [{"type": "text", "text": "\n".join(result_lines)}]
+
+        except Exception as e:
+            logger.error(f"Error in textDocument_documentSymbol: {e}", exc_info=True)
+            return [{"type": "text", "text": f"Error getting document symbols: {e}"}]
 
     # Tool: textDocument/completion
     @server.call_tool()
@@ -341,71 +440,86 @@ def create_server(config: Config) -> Server:
         input_data = CompletionInput(**arguments)
         file_path = Path(input_data.file)
 
+        # Validate file exists
+        is_valid, error_msg = validate_file(file_path)
+        if not is_valid:
+            return [{"type": "text", "text": f"Error: {error_msg}"}]
+
         # Get appropriate LSP client
         if input_data.lsp_id:
             lsp_client = lsp_manager.get_lsp_by_id(input_data.lsp_id)
         else:
             lsp_client = lsp_manager.get_lsp_by_extension(file_path)
 
-        # Ensure client is started
-        if not lsp_client.is_started():
-            await lsp_client.start()
+        try:
+            # Ensure client is started
+            if not lsp_client.is_started():
+                await lsp_client.start()
 
-        # Notify document open
-        await lsp_client.notify_document_open(str(file_path.absolute()), "python")
+            # Check capability
+            cap_error = await check_capability(lsp_client, "completionProvider", "completion")
+            if cap_error:
+                return cap_error
 
-        # Send completion request
-        params = {
-            "textDocument": {"uri": f"file://{file_path.absolute()}"},
-            "position": {"line": input_data.line, "character": input_data.character},
-        }
+            # Notify document open
+            await lsp_client.notify_document_open(str(file_path.absolute()), "python")
 
-        response = await lsp_client.send_request("textDocument/completion", params)
-
-        # Format response
-        if not response:
-            return [{"type": "text", "text": "No completions available"}]
-
-        # Response can be CompletionList or CompletionItem[]
-        items = response.get("items", response) if isinstance(response, dict) else response
-
-        if not items:
-            return [{"type": "text", "text": "No completions available"}]
-
-        result_lines = [f"Found {len(items)} completion(s):"]
-        for item in items[:20]:  # Limit to 20 items
-            if isinstance(item, dict):
-                label = item.get("label", "")
-                kind = item.get("kind", 0)
-                detail = item.get("detail", "")
-            else:
-                label = getattr(item, "label", "")
-                kind = getattr(item, "kind", 0)
-                detail = getattr(item, "detail", "")
-
-            # Completion kind names
-            kind_names = {
-                1: "Text",
-                2: "Method",
-                3: "Function",
-                4: "Constructor",
-                5: "Field",
-                6: "Variable",
-                7: "Class",
-                8: "Interface",
-                9: "Module",
-                10: "Property",
-                14: "Keyword",
-                15: "Snippet",
+            # Send completion request
+            params = {
+                "textDocument": {"uri": f"file://{file_path.absolute()}"},
+                "position": {"line": input_data.line, "character": input_data.character},
             }
-            kind_name = kind_names.get(kind, "")
 
-            result_lines.append(f"  - {label} ({kind_name}) {detail}")
+            response = await lsp_client.send_request("textDocument/completion", params)
 
-        if len(items) > 20:
-            result_lines.append(f"  ... and {len(items) - 20} more")
+            # Format response
+            if not response:
+                return [{"type": "text", "text": "No completions available"}]
 
-        return [{"type": "text", "text": "\n".join(result_lines)}]
+            # Response can be CompletionList or CompletionItem[]
+            items = response.get("items", response) if isinstance(response, dict) else response
+
+            if not items:
+                return [{"type": "text", "text": "No completions available"}]
+
+            result_lines = [f"Found {len(items)} completion(s):"]
+            for item in items[:20]:  # Limit to 20 items
+                if isinstance(item, dict):
+                    label = item.get("label", "")
+                    kind = item.get("kind", 0)
+                    detail = item.get("detail", "")
+                else:
+                    label = getattr(item, "label", "")
+                    kind = getattr(item, "kind", 0)
+                    detail = getattr(item, "detail", "")
+
+                # Completion kind names
+                kind_names = {
+                    1: "Text",
+                    2: "Method",
+                    3: "Function",
+                    4: "Constructor",
+                    5: "Field",
+                    6: "Variable",
+                    7: "Class",
+                    8: "Interface",
+                    9: "Module",
+                    10: "Property",
+                    14: "Keyword",
+                    15: "Snippet",
+                }
+                kind_name = kind_names.get(kind, "")
+
+                result_lines.append(f"  - {label} ({kind_name}) {detail}")
+
+            if len(items) > 20:
+                result_lines.append(f"  ... and {len(items) - 20} more")
+
+            return [{"type": "text", "text": "\n".join(result_lines)}]
+
+        except Exception as e:
+            logger.error(f"Error in textDocument_completion: {e}", exc_info=True)
+            return [{"type": "text", "text": f"Error getting completions: {e}"}]
 
     # Tool: lsp_info
     @server.call_tool()
@@ -456,7 +570,7 @@ def create_server(config: Config) -> Server:
         logger.info("Shutting down LSP servers...")
         await lsp_manager.shutdown_all()
 
-    return server
+    return server, lsp_manager
 
 
 async def run_server(config: Config) -> None:
@@ -465,6 +579,13 @@ async def run_server(config: Config) -> None:
     Args:
         config: Configuration for the server
     """
-    server = create_server(config)
+    server, lsp_manager = create_server(config)
+
+    # Eager initialization: start all LSP servers if configured
+    if config.eager_init:
+        logger.info("Eager initialization enabled - starting all LSP servers...")
+        await lsp_manager.start_all()
+        logger.info("All LSP servers started")
+
     async with stdio_server() as (read_stream, write_stream):
         await server.run(read_stream, write_stream, server.create_initialization_options())
