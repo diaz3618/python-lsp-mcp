@@ -6,7 +6,7 @@ from typing import Any
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
 from pydantic import BaseModel, Field
 
 from .config import Config
@@ -94,7 +94,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
 
     async def check_capability(
         lsp_client: Any, capability: str, tool_name: str
-    ) -> list[dict[str, str]] | None:
+    ) -> list[TextContent] | None:
         """Check if LSP supports capability, return error message if not.
 
         Args:
@@ -107,10 +107,10 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
         """
         if not lsp_client.has_capability(capability):
             return [
-                {
-                    "type": "text",
-                    "text": f"LSP server '{lsp_client.server_id}' doesn't support {tool_name}",
-                }
+                TextContent(
+                    type="text",
+                    text=f"LSP server '{lsp_client.server_id}' doesn't support {tool_name}",
+                )
             ]
         return None
 
@@ -127,8 +127,14 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
                     "properties": {
                         "file": {"type": "string", "description": "Path to the Python file"},
                         "line": {"type": "integer", "description": "Line number (0-indexed)"},
-                        "character": {"type": "integer", "description": "Character position (0-indexed)"},
-                        "lsp_id": {"type": "string", "description": "Specific LSP server ID to use (optional)"},
+                        "character": {
+                            "type": "integer",
+                            "description": "Character position (0-indexed)",
+                        },
+                        "lsp_id": {
+                            "type": "string",
+                            "description": "Specific LSP server ID to use (optional)",
+                        },
                     },
                     "required": ["file", "line", "character"],
                 },
@@ -141,8 +147,14 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
                     "properties": {
                         "file": {"type": "string", "description": "Path to the Python file"},
                         "line": {"type": "integer", "description": "Line number (0-indexed)"},
-                        "character": {"type": "integer", "description": "Character position (0-indexed)"},
-                        "lsp_id": {"type": "string", "description": "Specific LSP server ID to use (optional)"},
+                        "character": {
+                            "type": "integer",
+                            "description": "Character position (0-indexed)",
+                        },
+                        "lsp_id": {
+                            "type": "string",
+                            "description": "Specific LSP server ID to use (optional)",
+                        },
                     },
                     "required": ["file", "line", "character"],
                 },
@@ -155,8 +167,14 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
                     "properties": {
                         "file": {"type": "string", "description": "Path to the Python file"},
                         "line": {"type": "integer", "description": "Line number (0-indexed)"},
-                        "character": {"type": "integer", "description": "Character position (0-indexed)"},
-                        "lsp_id": {"type": "string", "description": "Specific LSP server ID to use (optional)"},
+                        "character": {
+                            "type": "integer",
+                            "description": "Character position (0-indexed)",
+                        },
+                        "lsp_id": {
+                            "type": "string",
+                            "description": "Specific LSP server ID to use (optional)",
+                        },
                     },
                     "required": ["file", "line", "character"],
                 },
@@ -168,7 +186,10 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
                     "type": "object",
                     "properties": {
                         "file": {"type": "string", "description": "Path to the Python file"},
-                        "lsp_id": {"type": "string", "description": "Specific LSP server ID to use (optional)"},
+                        "lsp_id": {
+                            "type": "string",
+                            "description": "Specific LSP server ID to use (optional)",
+                        },
                     },
                     "required": ["file"],
                 },
@@ -181,8 +202,14 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
                     "properties": {
                         "file": {"type": "string", "description": "Path to the Python file"},
                         "line": {"type": "integer", "description": "Line number (0-indexed)"},
-                        "character": {"type": "integer", "description": "Character position (0-indexed)"},
-                        "lsp_id": {"type": "string", "description": "Specific LSP server ID to use (optional)"},
+                        "character": {
+                            "type": "integer",
+                            "description": "Character position (0-indexed)",
+                        },
+                        "lsp_id": {
+                            "type": "string",
+                            "description": "Specific LSP server ID to use (optional)",
+                        },
                     },
                     "required": ["file", "line", "character"],
                 },
@@ -193,7 +220,10 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "lsp_id": {"type": "string", "description": "Specific LSP server ID to query (optional)"},
+                        "lsp_id": {
+                            "type": "string",
+                            "description": "Specific LSP server ID to query (optional)",
+                        },
                     },
                 },
             ),
@@ -205,18 +235,17 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
         """Handle tool calls by routing to appropriate handler."""
         if name == "textDocument_hover":
             return await handle_hover(arguments)
-        elif name == "textDocument_definition":
+        if name == "textDocument_definition":
             return await handle_definition(arguments)
-        elif name == "textDocument_references":
+        if name == "textDocument_references":
             return await handle_references(arguments)
-        elif name == "textDocument_documentSymbol":
+        if name == "textDocument_documentSymbol":
             return await handle_document_symbol(arguments)
-        elif name == "textDocument_completion":
+        if name == "textDocument_completion":
             return await handle_completion(arguments)
-        elif name == "lsp_info":
+        if name == "lsp_info":
             return await handle_lsp_info(arguments)
-        else:
-            return [TextContent(type="text", text=f"Unknown tool: {name}")]
+        return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
     # Tool: textDocument/hover
     async def handle_hover(arguments: dict[str, Any]) -> list[TextContent]:
@@ -246,7 +275,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
             # Check capability
             cap_error = await check_capability(lsp_client, "hoverProvider", "hover")
             if cap_error:
-                return [TextContent(type="text", text=cap_error[0]["text"])]
+                return cap_error
 
             # Notify document open
             await lsp_client.notify_document_open(str(file_path.absolute()), "python")
@@ -286,7 +315,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
 
         except Exception as e:
             logger.error(f"Error in textDocument_hover: {e}", exc_info=True)
-            return [{"type": "text", "text": f"Error getting hover information: {e}"}]
+            return [TextContent(type="text", text=f"Error getting hover information: {e}")]
 
     # Tool: textDocument/definition
     async def handle_definition(arguments: dict[str, Any]) -> list[TextContent]:
@@ -300,7 +329,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
         # Validate file exists
         is_valid, error_msg = validate_file(file_path)
         if not is_valid:
-            return [{"type": "text", "text": f"Error: {error_msg}"}]
+            return [TextContent(type="text", text=f"Error: {error_msg}")]
 
         # Get appropriate LSP client
         if input_data.lsp_id:
@@ -363,7 +392,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
 
         except Exception as e:
             logger.error(f"Error in textDocument_definition: {e}", exc_info=True)
-            return [{"type": "text", "text": f"Error getting definition: {e}"}]
+            return [TextContent(type="text", text=f"Error getting definition: {e}")]
 
     # Tool: textDocument/references
     async def handle_references(arguments: dict[str, Any]) -> list[TextContent]:
@@ -377,7 +406,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
         # Validate file exists
         is_valid, error_msg = validate_file(file_path)
         if not is_valid:
-            return [{"type": "text", "text": f"Error: {error_msg}"}]
+            return [TextContent(type="text", text=f"Error: {error_msg}")]
 
         # Get appropriate LSP client
         if input_data.lsp_id:
@@ -439,7 +468,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
 
         except Exception as e:
             logger.error(f"Error in textDocument_references: {e}", exc_info=True)
-            return [{"type": "text", "text": f"Error finding references: {e}"}]
+            return [TextContent(type="text", text=f"Error finding references: {e}")]
 
     # Tool: textDocument/documentSymbol
     async def handle_document_symbol(arguments: dict[str, Any]) -> list[TextContent]:
@@ -453,7 +482,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
         # Validate file exists
         is_valid, error_msg = validate_file(file_path)
         if not is_valid:
-            return [{"type": "text", "text": f"Error: {error_msg}"}]
+            return [TextContent(type="text", text=f"Error: {error_msg}")]
 
         # Get appropriate LSP client
         if input_data.lsp_id:
@@ -529,7 +558,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
 
         except Exception as e:
             logger.error(f"Error in textDocument_documentSymbol: {e}", exc_info=True)
-            return [{"type": "text", "text": f"Error getting document symbols: {e}"}]
+            return [TextContent(type="text", text=f"Error getting document symbols: {e}")]
 
     # Tool: textDocument/completion
     async def handle_completion(arguments: dict[str, Any]) -> list[TextContent]:
@@ -543,7 +572,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
         # Validate file exists
         is_valid, error_msg = validate_file(file_path)
         if not is_valid:
-            return [{"type": "text", "text": f"Error: {error_msg}"}]
+            return [TextContent(type="text", text=f"Error: {error_msg}")]
 
         # Get appropriate LSP client
         if input_data.lsp_id:
@@ -619,7 +648,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
 
         except Exception as e:
             logger.error(f"Error in textDocument_completion: {e}", exc_info=True)
-            return [{"type": "text", "text": f"Error getting completions: {e}"}]
+            return [TextContent(type="text", text=f"Error getting completions: {e}")]
 
     # Tool: lsp_info
     async def handle_lsp_info(arguments: dict[str, Any]) -> list[TextContent]:
