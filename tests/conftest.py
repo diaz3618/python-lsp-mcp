@@ -21,10 +21,10 @@ from typing import List, Optional
 
 def greet(name: str) -> str:
     """Greet a person by name.
-    
+
     Args:
         name: Person's name
-        
+
     Returns:
         Greeting message
     """
@@ -33,10 +33,10 @@ def greet(name: str) -> str:
 
 class Calculator:
     """Simple calculator class."""
-    
+
     def __init__(self):
         self.history: List[float] = []
-    
+
     def add(self, a: float, b: float) -> float:
         """Add two numbers."""
         result = a + b
