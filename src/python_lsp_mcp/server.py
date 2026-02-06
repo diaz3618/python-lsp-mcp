@@ -6,6 +6,7 @@ from typing import Any
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
+from mcp.types import Tool, TextContent
 from pydantic import BaseModel, Field
 
 from .config import Config
@@ -113,9 +114,112 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
             ]
         return None
 
-    # Tool: textDocument/hover
+    # Register tools
+    @server.list_tools()
+    async def list_tools() -> list[Tool]:
+        """List available MCP tools."""
+        return [
+            Tool(
+                name="textDocument_hover",
+                description="Get hover information for a symbol at a position in a Python file. Provides type information, documentation, and signatures for symbols.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "file": {"type": "string", "description": "Path to the Python file"},
+                        "line": {"type": "integer", "description": "Line number (0-indexed)"},
+                        "character": {"type": "integer", "description": "Character position (0-indexed)"},
+                        "lsp_id": {"type": "string", "description": "Specific LSP server ID to use (optional)"},
+                    },
+                    "required": ["file", "line", "character"],
+                },
+            ),
+            Tool(
+                name="textDocument_definition",
+                description="Go to the definition of a symbol. Returns the location(s) where the symbol is defined.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "file": {"type": "string", "description": "Path to the Python file"},
+                        "line": {"type": "integer", "description": "Line number (0-indexed)"},
+                        "character": {"type": "integer", "description": "Character position (0-indexed)"},
+                        "lsp_id": {"type": "string", "description": "Specific LSP server ID to use (optional)"},
+                    },
+                    "required": ["file", "line", "character"],
+                },
+            ),
+            Tool(
+                name="textDocument_references",
+                description="Find all references to a symbol. Returns all locations where the symbol is referenced in the workspace.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "file": {"type": "string", "description": "Path to the Python file"},
+                        "line": {"type": "integer", "description": "Line number (0-indexed)"},
+                        "character": {"type": "integer", "description": "Character position (0-indexed)"},
+                        "lsp_id": {"type": "string", "description": "Specific LSP server ID to use (optional)"},
+                    },
+                    "required": ["file", "line", "character"],
+                },
+            ),
+            Tool(
+                name="textDocument_documentSymbol",
+                description="Get document symbols (outline/structure) of a file. Returns all symbols (classes, functions, variables) in the document.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "file": {"type": "string", "description": "Path to the Python file"},
+                        "lsp_id": {"type": "string", "description": "Specific LSP server ID to use (optional)"},
+                    },
+                    "required": ["file"],
+                },
+            ),
+            Tool(
+                name="textDocument_completion",
+                description="Get code completion suggestions at a position. Returns available completions (functions, variables, keywords) at the cursor.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "file": {"type": "string", "description": "Path to the Python file"},
+                        "line": {"type": "integer", "description": "Line number (0-indexed)"},
+                        "character": {"type": "integer", "description": "Character position (0-indexed)"},
+                        "lsp_id": {"type": "string", "description": "Specific LSP server ID to use (optional)"},
+                    },
+                    "required": ["file", "line", "character"],
+                },
+            ),
+            Tool(
+                name="lsp_info",
+                description="Get information about configured LSP servers. Shows which LSP servers are configured, their status, and capabilities.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "lsp_id": {"type": "string", "description": "Specific LSP server ID to query (optional)"},
+                    },
+                },
+            ),
+        ]
+
+    # Tool handlers
     @server.call_tool()
-    async def textDocument_hover(arguments: dict[str, Any]) -> list[Any]:
+    async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
+        """Handle tool calls by routing to appropriate handler."""
+        if name == "textDocument_hover":
+            return await handle_hover(arguments)
+        elif name == "textDocument_definition":
+            return await handle_definition(arguments)
+        elif name == "textDocument_references":
+            return await handle_references(arguments)
+        elif name == "textDocument_documentSymbol":
+            return await handle_document_symbol(arguments)
+        elif name == "textDocument_completion":
+            return await handle_completion(arguments)
+        elif name == "lsp_info":
+            return await handle_lsp_info(arguments)
+        else:
+            return [TextContent(type="text", text=f"Unknown tool: {name}")]
+
+    # Tool: textDocument/hover
+    async def handle_hover(arguments: dict[str, Any]) -> list[TextContent]:
         """Get hover information for a symbol at a position in a Python file.
 
         Provides type information, documentation, and signatures for symbols.
@@ -126,7 +230,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
         # Validate file exists
         is_valid, error_msg = validate_file(file_path)
         if not is_valid:
-            return [{"type": "text", "text": f"Error: {error_msg}"}]
+            return [TextContent(type="text", text=f"Error: {error_msg}")]
 
         # Get appropriate LSP client
         if input_data.lsp_id:
@@ -142,7 +246,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
             # Check capability
             cap_error = await check_capability(lsp_client, "hoverProvider", "hover")
             if cap_error:
-                return cap_error
+                return [TextContent(type="text", text=cap_error[0]["text"])]
 
             # Notify document open
             await lsp_client.notify_document_open(str(file_path.absolute()), "python")
@@ -176,17 +280,16 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
                 else:
                     text = str(contents)
 
-                return [{"type": "text", "text": text}]
+                return [TextContent(type="text", text=text)]
 
-            return [{"type": "text", "text": "No hover information available"}]
+            return [TextContent(type="text", text="No hover information available")]
 
         except Exception as e:
             logger.error(f"Error in textDocument_hover: {e}", exc_info=True)
             return [{"type": "text", "text": f"Error getting hover information: {e}"}]
 
     # Tool: textDocument/definition
-    @server.call_tool()
-    async def textDocument_definition(arguments: dict[str, Any]) -> list[Any]:
+    async def handle_definition(arguments: dict[str, Any]) -> list[TextContent]:
         """Go to the definition of a symbol.
 
         Returns the location(s) where the symbol is defined.
@@ -234,7 +337,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
 
             # Format response
             if not response:
-                return [{"type": "text", "text": "No definition found"}]
+                return [TextContent(type="text", text="No definition found")]
 
             # Response can be Location, Location[], or LocationLink[]
             locations = response if isinstance(response, list) else [response]
@@ -254,17 +357,16 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
                         result_lines.append(f"File: {uri}")
 
             if result_lines:
-                return [{"type": "text", "text": "\n\n".join(result_lines)}]
+                return [TextContent(type="text", text="\n\n".join(result_lines))]
 
-            return [{"type": "text", "text": "Definition found but could not be parsed"}]
+            return [TextContent(type="text", text="Definition found but could not be parsed")]
 
         except Exception as e:
             logger.error(f"Error in textDocument_definition: {e}", exc_info=True)
             return [{"type": "text", "text": f"Error getting definition: {e}"}]
 
     # Tool: textDocument/references
-    @server.call_tool()
-    async def textDocument_references(arguments: dict[str, Any]) -> list[Any]:
+    async def handle_references(arguments: dict[str, Any]) -> list[TextContent]:
         """Find all references to a symbol.
 
         Returns all locations where the symbol is referenced in the workspace.
@@ -307,7 +409,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
 
             # Format response
             if not response:
-                return [{"type": "text", "text": "No references found"}]
+                return [TextContent(type="text", text="No references found")]
 
             result_lines = [f"Found {len(response)} reference(s):"]
             for ref in response:
@@ -333,15 +435,14 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
                 file_name = Path(uri.replace("file://", "")).name if uri else "unknown"
                 result_lines.append(f"  - {file_name}:{line + 1}:{char + 1}")
 
-            return [{"type": "text", "text": "\n".join(result_lines)}]
+            return [TextContent(type="text", text="\n".join(result_lines))]
 
         except Exception as e:
             logger.error(f"Error in textDocument_references: {e}", exc_info=True)
             return [{"type": "text", "text": f"Error finding references: {e}"}]
 
     # Tool: textDocument/documentSymbol
-    @server.call_tool()
-    async def textDocument_documentSymbol(arguments: dict[str, Any]) -> list[Any]:
+    async def handle_document_symbol(arguments: dict[str, Any]) -> list[TextContent]:
         """Get document symbols (outline/structure) of a file.
 
         Returns all symbols (classes, functions, variables) in the document.
@@ -382,7 +483,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
 
             # Format response
             if not response:
-                return [{"type": "text", "text": "No symbols found"}]
+                return [TextContent(type="text", text="No symbols found")]
 
             def format_symbol(symbol: Any, indent: int = 0) -> list[str]:
                 """Recursively format symbol information."""
@@ -424,15 +525,14 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
             for symbol in response:
                 result_lines.extend(format_symbol(symbol))
 
-            return [{"type": "text", "text": "\n".join(result_lines)}]
+            return [TextContent(type="text", text="\n".join(result_lines))]
 
         except Exception as e:
             logger.error(f"Error in textDocument_documentSymbol: {e}", exc_info=True)
             return [{"type": "text", "text": f"Error getting document symbols: {e}"}]
 
     # Tool: textDocument/completion
-    @server.call_tool()
-    async def textDocument_completion(arguments: dict[str, Any]) -> list[Any]:
+    async def handle_completion(arguments: dict[str, Any]) -> list[TextContent]:
         """Get code completion suggestions at a position.
 
         Returns available completions (functions, variables, keywords) at the cursor.
@@ -474,13 +574,13 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
 
             # Format response
             if not response:
-                return [{"type": "text", "text": "No completions available"}]
+                return [TextContent(type="text", text="No completions available")]
 
             # Response can be CompletionList or CompletionItem[]
             items = response.get("items", response) if isinstance(response, dict) else response
 
             if not items:
-                return [{"type": "text", "text": "No completions available"}]
+                return [TextContent(type="text", text="No completions available")]
 
             result_lines = [f"Found {len(items)} completion(s):"]
             for item in items[:20]:  # Limit to 20 items
@@ -515,15 +615,14 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
             if len(items) > 20:
                 result_lines.append(f"  ... and {len(items) - 20} more")
 
-            return [{"type": "text", "text": "\n".join(result_lines)}]
+            return [TextContent(type="text", text="\n".join(result_lines))]
 
         except Exception as e:
             logger.error(f"Error in textDocument_completion: {e}", exc_info=True)
             return [{"type": "text", "text": f"Error getting completions: {e}"}]
 
     # Tool: lsp_info
-    @server.call_tool()
-    async def lsp_info(arguments: dict[str, Any]) -> list[Any]:
+    async def handle_lsp_info(arguments: dict[str, Any]) -> list[TextContent]:
         """Get information about configured LSP servers.
 
         Shows which LSP servers are configured, their status, and capabilities.
@@ -544,12 +643,12 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
             if lsp_client.is_started() and lsp_client.server_capabilities:
                 info += f"\nCapabilities:\n{lsp_client.server_capabilities}"
 
-            return [{"type": "text", "text": info}]
+            return [TextContent(type="text", text=info)]
 
         # List all LSPs
         lsps = lsp_manager.list_lsps()
         if not lsps:
-            return [{"type": "text", "text": "No LSP servers configured"}]
+            return [TextContent(type="text", text="No LSP servers configured")]
 
         info_lines = ["Configured LSP Servers:", ""]
         for lsp_info in lsps:
@@ -561,7 +660,7 @@ def create_server(config: Config) -> tuple[Server, LSPManager]:
                 f"Status: {lsp_info['status']}\n"
             )
 
-        return [{"type": "text", "text": "\n".join(info_lines)}]
+        return [TextContent(type="text", text="\n".join(info_lines))]
 
     return server, lsp_manager
 
