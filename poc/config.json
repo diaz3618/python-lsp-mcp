@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "lsp": {
-      "command": "uv",
-      "args": ["run", "main.py"]
-    }
-  }
-}

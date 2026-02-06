@@ -1,0 +1,21 @@
+{
+	"servers": {
+		"analyzer": {
+			"command": "uvx",
+			"args": [
+				"mcp-server-analyzer"
+			],
+			"type": "stdio"
+		},
+		"memory-bank-mcp": {
+			"type": "stdio",
+			"command": "node",
+			"args": [
+				"/home/diaz/mygit/memory-bank-mcp/build/index.js",
+				"--mode",
+				"code"
+			],
+			"env": {}
+		}
+	}
+}

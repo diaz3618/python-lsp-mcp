@@ -1,0 +1,28 @@
+# Example configuration for Python LSP-MCP Server
+
+# Workspace root path
+workspace = "/home/diaz/mygit/python-lsp-mcp"
+
+# LSP servers configuration
+[[lsps]]
+id = "pylsp"
+command = "pylsp"
+args = []
+extensions = [".py", ".pyi"]
+languages = ["python"]
+
+# Optional: Add additional LSP servers
+# [[lsps]]
+# id = "pyright"
+# command = "pyright-langserver"
+# args = ["--stdio"]
+# extensions = [".py", ".pyi"]
+# languages = ["python"]
+
+# Optional: Filter which LSP methods to expose as tools
+# If not specified, all supported methods will be available
+# methods = [
+#     "textDocument/hover",
+#     "textDocument/definition",
+#     "textDocument/references",
+# ]

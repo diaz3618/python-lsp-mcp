@@ -312,3 +312,14 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+repos
+agents
+AGENT.md
+lsp-mcp_original-project
+.github/copilot-instructions.md
+
+# Memory Bank MCP creates nested structure due to bug
+home/
+memory-bank/
+docs/research
