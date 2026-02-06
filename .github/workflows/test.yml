@@ -75,7 +75,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          pip install py-lsp-server  # For type checking imports
+          pip install python-lsp-server  # For type checking imports
 
       - name: Run ruff linter
         run: |
