@@ -4,7 +4,7 @@ A Model Context Protocol (MCP) server that bridges LLMs with Language Server Pro
 
 [![Tests](https://img.shields.io/badge/tests-28%20passed-brightgreen)](tests/)
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## Features
 
@@ -25,7 +25,7 @@ A Model Context Protocol (MCP) server that bridges LLMs with Language Server Pro
 
 ## Installation
 
-### From PyPI (Coming Soon)
+### From PyPI
 
 ```bash
 pip install python-lsp-mcp
@@ -37,16 +37,16 @@ uv pip install python-lsp-mcp
 
 ```bash
 # Latest version
-pip install git+https://github.com/yourusername/python-lsp-mcp.git
+pip install git+https://github.com/diaz3618/python-lsp-mcp.git
 
 # Specific version
-pip install git+https://github.com/yourusername/python-lsp-mcp.git@v0.1.0
+pip install git+https://github.com/diaz3618/python-lsp-mcp.git@v0.1.0
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/python-lsp-mcp.git
+git clone https://github.com/diaz3618/python-lsp-mcp.git
 cd python-lsp-mcp
 pip install -e .
 ```
@@ -105,7 +105,7 @@ pip install -e ".[dev]"
 pytest tests/ -v
 
 # Format code
-black src/
+ruff format src/
 
 # Lint
 ruff check src/
@@ -118,30 +118,7 @@ mypy src/
 
 Comprehensive test suite with 100% pass rate:
 
-```Contributing
-
-Contributions welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and add tests
-4. Ensure all tests pass: `pytest tests/`
-5. Format code: `black src/ tests/`
-6. Commit: `git commit -m "feat: add amazing feature"`
-7. Push: `git push origin feature/amazing-feature`
-8. Open a pull request
-
-## License
-
-MIT License - see [LICENSE.txt](LICENSE.txt) for details.
-
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/python-lsp-mcp/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/python-lsp-mcp/discussions)
-- **MCP Documentation**: [Model Context Protocol](https://modelcontextprotocol.io)
-- **LSP Specification**: [Language Server Protocol](https://microsoft.github.io/language-server-protocol/)
-
+```bash
 # Run with coverage
 pytest tests/ --cov=python_lsp_mcp --cov-report=html
 
@@ -159,32 +136,21 @@ pytest tests/test_integration.py -v
 - End-to-end integration (5 tests)
 - Legacy compatibility (1 test)
 
-Total: **28 tests, all passing** ✅rn how to distribute Python LSP-MCP:
-
-- **[GitHub Publishing](docs/publishing/github.md)** - Releases, tags, git installation
-- **[PyPI Publishing](docs/publishing/pypi.md)** - Python Package Index distribution
-- **[Alternative Methods](docs/publishing/distribution.md)** - Docker, Conda, Homebrew, and more
+Total: **28 tests, all passing** ✅
 
 ## Requirements
 
 - Python 3.12+
 - An LSP server (e.g., pylsp, pyright)
 
-## Development
+## Contributing
 
-```bash
-# Run tests
-pytest tests/
+Contributions welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
 
-# Format code
-black src/
-
-# Lint
-ruff check src/
-
-# Type check
-mypy src/
-```
+- Setting up your development environment
+- Making changes and adding tests
+- Code style and quality standards
+- Submitting pull requests
 
 ## Architecture
 
@@ -196,4 +162,11 @@ mypy src/
 
 ## License
 
-See LICENSE.txt for details.
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/diaz3618/python-lsp-mcp/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/diaz3618/python-lsp-mcp/discussions)
+- **MCP Documentation**: [Model Context Protocol](https://modelcontextprotocol.io)
+- **LSP Specification**: [Language Server Protocol](https://microsoft.github.io/language-server-protocol/)

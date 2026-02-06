@@ -2,7 +2,6 @@
 
 import sys
 from pathlib import Path
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -22,20 +21,14 @@ class LSPServerConfig(BaseModel):
     extensions: list[str] = Field(
         default_factory=list, description="File extensions this LSP handles"
     )
-    languages: list[str] = Field(
-        default_factory=list, description="Language IDs this LSP handles"
-    )
+    languages: list[str] = Field(default_factory=list, description="Language IDs this LSP handles")
 
 
 class Config(BaseModel):
     """Main configuration for Python LSP-MCP Server."""
 
-    lsps: list[LSPServerConfig] = Field(
-        default_factory=list, description="LSP servers to manage"
-    )
-    workspace: Path = Field(
-        default=Path("/"), description="Default workspace root path"
-    )
+    lsps: list[LSPServerConfig] = Field(default_factory=list, description="LSP servers to manage")
+    workspace: Path = Field(default=Path("/"), description="Default workspace root path")
     methods: list[str] | None = Field(
         default=None, description="Optional list of LSP methods to expose as tools"
     )

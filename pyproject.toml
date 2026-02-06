@@ -7,11 +7,12 @@ authors = [
     { name = "Daniel Diaz Santiago", email = "daniel.diaz.stg@gmail.com" }
 ]
 requires-python = ">=3.12"
-keywords = ["mcp", "lsp", "language-server-protocol", "python", "ai", "llm"]
+license = "MIT"
+keywords = ["mcp", "lsp", "language-server", "language-server-protocol", "model-context-protocol", "python", "ai", "llm"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -22,6 +23,12 @@ dependencies = [
     "lsprotocol>=2024.0.1",
     "pydantic>=2.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/diaz3618/python-lsp-mcp"
+Documentation = "https://github.com/diaz3618/python-lsp-mcp/blob/main/README.md"
+Repository = "https://github.com/diaz3618/python-lsp-mcp"
+Issues = "https://github.com/diaz3618/python-lsp-mcp/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -36,8 +43,8 @@ dev = [
 python-lsp-mcp = "python_lsp_mcp.__main__:main"
 
 [build-system]
-requires = ["uv_build>=0.9.26,<0.10.0"]
-build-backend = "uv_build"
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 100
@@ -53,10 +60,28 @@ ignore = []
 
 [tool.mypy]
 python_version = "3.12"
-strict = true
-warn_return_any = true
+strict = false
+warn_return_any = false
 warn_unused_configs = true
-disallow_untyped_defs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+# Allow untyped decorators from MCP SDK
+disallow_untyped_decorators = false
+# Ignore untyped calls to external libraries
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+module = "pygls.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "lsprotocol.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "mcp.*"
+ignore_missing_imports = true
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

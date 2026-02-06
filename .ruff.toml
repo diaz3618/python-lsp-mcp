@@ -1,0 +1,33 @@
+# Ruff configuration for Python LSP-MCP
+
+# Line length
+line-length = 100
+
+[lint]
+# Enable specific rule categories
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RET"]
+
+# Ignore specific rules
+ignore = [
+    "N802",  # Function names should be lowercase (intentional for LSP method names)
+    "UP036", # Version block is outdated (keeping for clarity, we support 3.12+)
+]
+
+# Exclude directories
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "dist",
+    "build",
+    "*.egg-info",
+]
+
+[lint.per-file-ignores]
+# Allow longer lines in server.py for LSP protocol handling
+"src/python_lsp_mcp/server.py" = ["E501"]
+
+[format]
+# Formatting options
+indent-style = "space"
+quote-style = "double"

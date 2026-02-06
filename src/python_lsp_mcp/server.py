@@ -93,11 +93,11 @@ def create_server(config: Config) -> Server:
             lsp_client = lsp_manager.get_lsp_by_extension(file_path)
 
         # Ensure client is started
-        if not lsp_client.initialized:
+        if not lsp_client.is_started():
             await lsp_client.start()
 
         # Notify document open
-        await lsp_client.notify_document_open(file_path, "python")
+        await lsp_client.notify_document_open(str(file_path.absolute()), "python")
 
         # Send hover request
         from lsprotocol.types import (
@@ -149,11 +149,11 @@ def create_server(config: Config) -> Server:
             lsp_client = lsp_manager.get_lsp_by_extension(file_path)
 
         # Ensure client is started
-        if not lsp_client.initialized:
+        if not lsp_client.is_started():
             await lsp_client.start()
 
         # Notify document open
-        await lsp_client.notify_document_open(file_path, "python")
+        await lsp_client.notify_document_open(str(file_path.absolute()), "python")
 
         # Send definition request
         from lsprotocol.types import (
@@ -233,11 +233,24 @@ def create_server(config: Config) -> Server:
 
         result_lines = [f"Found {len(response)} reference(s):"]
         for ref in response:
-            uri = ref.get("uri", "") if isinstance(ref, dict) else getattr(ref, "uri", "")
-            range_info = ref.get("range", {}) if isinstance(ref, dict) else getattr(ref, "range", {})
-            start = range_info.get("start", {}) if isinstance(range_info, dict) else getattr(range_info, "start", {})
-            line = start.get("line", -1) if isinstance(start, dict) else getattr(start, "line", -1)
-            char = start.get("character", -1) if isinstance(start, dict) else getattr(start, "character", -1)
+            if isinstance(ref, dict):
+                uri = ref.get("uri", "")
+                range_info = ref.get("range", {})
+            else:
+                uri = getattr(ref, "uri", "")
+                range_info = getattr(ref, "range", {})
+
+            if isinstance(range_info, dict):
+                start = range_info.get("start", {})
+            else:
+                start = getattr(range_info, "start", {})
+
+            if isinstance(start, dict):
+                line = start.get("line", -1)
+                char = start.get("character", -1)
+            else:
+                line = getattr(start, "line", -1)
+                char = getattr(start, "character", -1)
 
             file_name = Path(uri.replace("file://", "")).name if uri else "unknown"
             result_lines.append(f"  - {file_name}:{line + 1}:{char + 1}")
@@ -276,23 +289,37 @@ def create_server(config: Config) -> Server:
         if not response:
             return [{"type": "text", "text": "No symbols found"}]
 
-        def format_symbol(symbol, indent=0):
+        def format_symbol(symbol: Any, indent: int = 0) -> list[str]:
             """Recursively format symbol information."""
             prefix = "  " * indent
-            name = symbol.get("name", "") if isinstance(symbol, dict) else getattr(symbol, "name", "")
-            kind = symbol.get("kind", 0) if isinstance(symbol, dict) else getattr(symbol, "kind", 0)
+            if isinstance(symbol, dict):
+                name = symbol.get("name", "")
+                kind = symbol.get("kind", 0)
+            else:
+                name = getattr(symbol, "name", "")
+                kind = getattr(symbol, "kind", 0)
 
             # Symbol kind mapping (simplified)
             kind_names = {
-                1: "File", 2: "Module", 3: "Namespace", 4: "Package", 5: "Class",
-                6: "Method", 12: "Function", 13: "Variable", 14: "Constant",
+                1: "File",
+                2: "Module",
+                3: "Namespace",
+                4: "Package",
+                5: "Class",
+                6: "Method",
+                12: "Function",
+                13: "Variable",
+                14: "Constant",
             }
             kind_name = kind_names.get(kind, f"Kind{kind}")
 
             lines = [f"{prefix}{kind_name}: {name}"]
 
             # Process children
-            children = symbol.get("children", []) if isinstance(symbol, dict) else getattr(symbol, "children", [])
+            if isinstance(symbol, dict):
+                children = symbol.get("children", [])
+            else:
+                children = getattr(symbol, "children", [])
             for child in children:
                 lines.extend(format_symbol(child, indent + 1))
 
@@ -347,15 +374,29 @@ def create_server(config: Config) -> Server:
 
         result_lines = [f"Found {len(items)} completion(s):"]
         for item in items[:20]:  # Limit to 20 items
-            label = item.get("label", "") if isinstance(item, dict) else getattr(item, "label", "")
-            kind = item.get("kind", 0) if isinstance(item, dict) else getattr(item, "kind", 0)
-            detail = item.get("detail", "") if isinstance(item, dict) else getattr(item, "detail", "")
+            if isinstance(item, dict):
+                label = item.get("label", "")
+                kind = item.get("kind", 0)
+                detail = item.get("detail", "")
+            else:
+                label = getattr(item, "label", "")
+                kind = getattr(item, "kind", 0)
+                detail = getattr(item, "detail", "")
 
             # Completion kind names
             kind_names = {
-                1: "Text", 2: "Method", 3: "Function", 4: "Constructor", 5: "Field",
-                6: "Variable", 7: "Class", 8: "Interface", 9: "Module", 10: "Property",
-                14: "Keyword", 15: "Snippet",
+                1: "Text",
+                2: "Method",
+                3: "Function",
+                4: "Constructor",
+                5: "Field",
+                6: "Variable",
+                7: "Class",
+                8: "Interface",
+                9: "Module",
+                10: "Property",
+                14: "Keyword",
+                15: "Snippet",
             }
             kind_name = kind_names.get(kind, "")
 
@@ -383,11 +424,11 @@ def create_server(config: Config) -> Server:
                 f"Command: {lsp_client.config.command} {' '.join(lsp_client.config.args)}\n"
                 f"Languages: {', '.join(lsp_client.config.languages)}\n"
                 f"Extensions: {', '.join(lsp_client.config.extensions)}\n"
-                f"Status: {'initialized' if lsp_client.initialized else 'not started'}\n"
+                f"Status: {'started' if lsp_client.is_started() else 'not started'}\n"
             )
 
-            if lsp_client.initialized and lsp_client.capabilities:
-                info += f"\nCapabilities:\n{lsp_client.capabilities}"
+            if lsp_client.is_started() and lsp_client.server_capabilities:
+                info += f"\nCapabilities:\n{lsp_client.server_capabilities}"
 
             return [{"type": "text", "text": info}]
 
@@ -409,7 +450,7 @@ def create_server(config: Config) -> Server:
         return [{"type": "text", "text": "\n".join(info_lines)}]
 
     # Cleanup handler
-    @server.on_close()
+    @server.on_close()  # type: ignore[attr-defined]
     async def on_close() -> None:
         """Cleanup when server is shutting down."""
         logger.info("Shutting down LSP servers...")
@@ -426,4 +467,4 @@ async def run_server(config: Config) -> None:
     """
     server = create_server(config)
     async with stdio_server() as (read_stream, write_stream):
-        await server.run(read_stream, write_stream)
+        await server.run(read_stream, write_stream, server.create_initialization_options())

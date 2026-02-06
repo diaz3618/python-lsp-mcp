@@ -49,7 +49,7 @@ class LSPManager:
             logger.warning(f"LSP server {lsp_id} already started")
             return
 
-        client = LSPClient(lsp_config, self.config.workspace)
+        client = LSPClient(lsp_config, str(self.config.workspace))
         await client.start()
         self.clients[lsp_id] = client
         logger.info(f"Started LSP server: {lsp_id}")
@@ -89,10 +89,9 @@ class LSPManager:
             ValueError: If no LSP server handles this extension
         """
         # Convert to Path if string
-        from pathlib import Path
         if isinstance(file_path, str):
             file_path = Path(file_path)
-            
+
         extension = file_path.suffix
         if extension not in self.extension_map:
             raise ValueError(f"No LSP server configured for extension: {extension}")
