@@ -326,3 +326,4 @@ tests/
 docs/research
 docs/setup
 docs/publishing
+.vscode/mcp.json
