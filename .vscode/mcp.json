@@ -31,12 +31,13 @@
 			"env": {}
 		}
 		// Alternative: GitHub version (for latest development features)
+		// Note: Currently incompatible with latest MCP SDK - needs migration
 		// "python-lsp-mcp-github": {
 		// 	"type": "stdio",
 		// 	"command": "uvx",
 		// 	"args": [
 		// 		"--from",
-		// 		"git+https://github.com/diaz3618/python-lsp-mcp.git",
+		// 		"git+https://github.com/diaz3618/python-lsp-mcp.git@main",
 		// 		"python-lsp-mcp",
 		// 		"--lsp-command",
 		// 		"pylsp",

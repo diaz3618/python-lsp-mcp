@@ -49,7 +49,7 @@ uv pip install python-lsp-mcp
 pip install git+https://github.com/diaz3618/python-lsp-mcp.git
 
 # Specific version
-pip install git+https://github.com/diaz3618/python-lsp-mcp.git@v0.1.0
+pip install git+https://github.com/diaz3618/python-lsp-mcp.git@v0.1.1
 ```
 
 ### From Source
